@@ -1,0 +1,1658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="Incremental Model – BCA 4th Semester Software Engineering Presentation" />
+  <meta name="theme-color" content="#0a0a1a" />
+  <title>Incremental Model – BCA 4th Semester</title>
+  <style>
+    /* ── Reset & Base ── */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --orange : #FF6B35;
+      --yellow : #FFD700;
+      --teal   : #00B4D8;
+      --green  : #06D6A0;
+      --blue   : #118AB2;
+      --dark   : #0a0a1a;
+      --card-bg: rgba(255,255,255,0.06);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--dark);
+      color: #fff;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      overflow-x: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ── Starfield ── */
+    #stars-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ── WebGL Canvas ── */
+    #webgl-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      opacity: .35;
+    }
+
+    /* ── NAVIGATION ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 2rem;
+      padding: .8rem 1rem;
+      background: rgba(10,10,26,.8);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      transition: background .3s, box-shadow .3s;
+    }
+
+    nav.scrolled {
+      background: rgba(10,10,26,.95);
+      box-shadow: 0 4px 20px rgba(0,0,0,.4);
+    }
+
+    nav a {
+      color: #aaa;
+      text-decoration: none;
+      font-size: .8rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      transition: color .3s, transform .2s;
+      padding: .4rem .2rem;
+      position: relative;
+    }
+
+    nav a::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--yellow);
+      transform: scaleX(0);
+      transition: transform .3s ease;
+      border-radius: 1px;
+    }
+
+    nav a:hover, nav a.active { color: #FFD700; }
+    nav a:hover::after, nav a.active::after { transform: scaleX(1); }
+
+    /* Hamburger */
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      cursor: pointer;
+      padding: 8px;
+      z-index: 101;
+      background: none;
+      border: none;
+    }
+
+    .hamburger span {
+      width: 24px;
+      height: 2px;
+      background: #fff;
+      border-radius: 2px;
+      transition: transform .3s, opacity .3s;
+    }
+
+    .hamburger.open span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+    .hamburger.open span:nth-child(2) { opacity: 0; }
+    .hamburger.open span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      align-items: center;
+    }
+
+    /* ── HERO ── */
+    #hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 6rem 2rem 2rem;
+      z-index: 1;
+    }
+
+    .hero-badge {
+      display: inline-block;
+      padding: .4rem 1.2rem;
+      border: 1px solid rgba(255,107,53,.3);
+      border-radius: 50px;
+      font-size: .72rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--orange);
+      margin-bottom: 1.5rem;
+      animation: fadeInUp 1s both;
+      backdrop-filter: blur(4px);
+      background: rgba(255,107,53,.06);
+    }
+
+    #hero h1 {
+      font-size: clamp(2.2rem, 6vw, 5rem);
+      font-weight: 900;
+      letter-spacing: 2px;
+      background: linear-gradient(135deg, #FF6B35, #FFD700, #06D6A0, #00B4D8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: gradientShift 4s ease infinite;
+      background-size: 300% 300%;
+      line-height: 1.1;
+    }
+
+    @keyframes gradientShift {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    #hero p.subtitle {
+      margin-top: 1rem;
+      font-size: 1.1rem;
+      color: #aaa;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      animation: fadeInUp 1s 0.4s both;
+    }
+
+    .hero-description {
+      margin-top: 1.2rem;
+      font-size: .9rem;
+      color: #666;
+      max-width: 520px;
+      line-height: 1.7;
+      animation: fadeInUp 1s 0.6s both;
+    }
+
+    .hero-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      margin-top: 2rem;
+      padding: .8rem 2rem;
+      border: 2px solid var(--orange);
+      border-radius: 50px;
+      color: var(--orange);
+      text-decoration: none;
+      font-size: .85rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      transition: background .3s, color .3s, transform .2s, box-shadow .3s;
+      animation: fadeInUp 1s 0.8s both;
+    }
+
+    .hero-cta:hover {
+      background: var(--orange);
+      color: #fff;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(255,107,53,.3);
+    }
+
+    #hero .scroll-hint {
+      margin-top: 3rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: .4rem;
+      color: #555;
+      font-size: .85rem;
+      animation: bounce 2s infinite;
+    }
+
+    #hero .scroll-hint span {
+      width: 2px; height: 40px;
+      background: linear-gradient(to bottom, #FF6B35, transparent);
+    }
+
+    @keyframes bounce {
+      0%,100% { transform: translateY(0); }
+      50%      { transform: translateY(8px); }
+    }
+
+    /* ── SECTION REVEAL ANIMATION ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity .7s ease, transform .7s ease;
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── STATS BAR ── */
+    #stats {
+      position: relative;
+      z-index: 1;
+      padding: 2rem 1rem;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+    }
+
+    .stat-item {
+      text-align: center;
+      padding: 1.2rem .8rem;
+      background: var(--card-bg);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 16px;
+      backdrop-filter: blur(8px);
+      transition: transform .3s;
+    }
+
+    .stat-item:hover { transform: translateY(-4px); }
+
+    .stat-number {
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      font-weight: 900;
+      background: linear-gradient(135deg, var(--orange), var(--yellow));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .stat-label {
+      font-size: .72rem;
+      color: #888;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-top: .3rem;
+    }
+
+    /* ── 3-D SCENE (CSS perspective) ── */
+    #scene-section {
+      position: relative;
+      z-index: 1;
+      padding: 4rem 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .section-header h2 {
+      font-size: clamp(1.4rem, 3vw, 2.2rem);
+      color: #FFD700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+
+    .section-header p {
+      color: #555;
+      font-size: .85rem;
+      margin-top: .5rem;
+    }
+
+    #scene-wrapper {
+      perspective: 1200px;
+      width: 100%;
+      max-width: 1100px;
+    }
+
+    #scene {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 1.5rem;
+      transform: rotateX(12deg) rotateY(-8deg);
+      transform-style: preserve-3d;
+      transition: transform .6s ease;
+      padding: 2rem 1rem 3rem;
+    }
+
+    #scene-wrapper:hover #scene {
+      transform: rotateX(4deg) rotateY(0deg);
+    }
+
+    /* ── PHASE COLUMN ── */
+    .phase-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: .8rem;
+      cursor: pointer;
+      transform-style: preserve-3d;
+      transition: transform .3s ease;
+    }
+
+    .phase-col:hover { transform: translateY(-16px) scale(1.06); }
+
+    .block {
+      width: 110px;
+      border-radius: 12px 12px 4px 4px;
+      position: relative;
+      transform-style: preserve-3d;
+      box-shadow: 0 20px 50px rgba(0,0,0,.5);
+      animation: floatBlock 3s ease-in-out infinite;
+    }
+
+    .phase-col:nth-child(2) .block { animation-delay: .3s; }
+    .phase-col:nth-child(3) .block { animation-delay: .6s; }
+    .phase-col:nth-child(4) .block { animation-delay: .9s; }
+    .phase-col:nth-child(5) .block { animation-delay: 1.2s; }
+
+    @keyframes floatBlock {
+      0%,100% { transform: translateY(0) rotateY(0deg); }
+      50%      { transform: translateY(-8px) rotateY(4deg); }
+    }
+
+    .block::before {
+      content:'';
+      position:absolute;
+      inset: 0;
+      top: auto;
+      bottom: -14px;
+      height: 14px;
+      border-radius: 0 0 4px 4px;
+      filter: brightness(.55);
+      background: inherit;
+      transform: rotateX(-90deg);
+      transform-origin: bottom;
+    }
+
+    .block::after {
+      content:'';
+      position:absolute;
+      inset:0;
+      left: auto;
+      right: -12px;
+      width: 12px;
+      border-radius: 0 4px 4px 0;
+      filter: brightness(.7);
+      background: inherit;
+      transform: rotateY(90deg);
+      transform-origin: left;
+    }
+
+    .h1 { height: 260px; background: var(--orange); }
+    .h2 { height: 210px; background: var(--yellow); }
+    .h2::before,.h2::after { background: var(--yellow); }
+    .h3 { height: 165px; background: var(--green); }
+    .h4 { height: 125px; background: var(--teal); }
+    .h5 { height:  90px; background: var(--blue); }
+
+    .face-label {
+      position: absolute;
+      top: 18px; left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,.75);
+      border: 2px solid rgba(255,255,255,.25);
+      border-radius: 8px;
+      width: 80px;
+      padding: 6px 4px;
+      font-size: .65rem;
+      text-align: center;
+      line-height: 1.3;
+      color: #fff;
+      font-weight: 700;
+      letter-spacing: .5px;
+    }
+
+    .block-icon {
+      position: absolute;
+      top: -22px; left: 50%;
+      transform: translateX(-50%);
+      font-size: 1.4rem;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,.5));
+    }
+
+    .phase-name {
+      font-size: .8rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      text-align: center;
+      padding: .3rem .6rem;
+      border-radius: 6px;
+      background: rgba(255,255,255,.08);
+    }
+
+    .arrow {
+      font-size: 1.6rem;
+      color: rgba(255,255,255,.3);
+      align-self: center;
+      margin-bottom: 2rem;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%,100% { opacity:.3; transform: scale(1); }
+      50%      { opacity:1;  transform: scale(1.2); }
+    }
+
+    /* ── PHASES DETAIL CARDS ── */
+    #phases {
+      position: relative;
+      z-index: 1;
+      padding: 3rem 1rem 5rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    #phases .section-header h2 { color: #FFD700; }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 16px;
+      padding: 1.6rem 1.2rem;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      transition: transform .3s, box-shadow .3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content:'';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      background: var(--accent);
+      border-radius: 4px 4px 0 0;
+    }
+
+    .card:hover {
+      transform: translateY(-8px) scale(1.02);
+      box-shadow: 0 20px 40px rgba(0,0,0,.4), 0 0 20px var(--accent);
+    }
+
+    .card .card-icon { font-size: 2rem; margin-bottom: .7rem; }
+    .card h3 { font-size: 1rem; margin-bottom: .5rem; color: var(--accent); }
+    .card p { font-size: .82rem; color: #bbb; line-height: 1.7; }
+
+    .card .card-tag {
+      display: inline-block;
+      margin-top: .8rem;
+      padding: .25rem .7rem;
+      border-radius: 50px;
+      font-size: .65rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      opacity: .7;
+    }
+
+    /* ── INCREMENTS TIMELINE ── */
+    #increments {
+      position: relative;
+      z-index: 1;
+      padding: 3rem 1rem 5rem;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    #increments .section-header h2 { color: #06D6A0; }
+
+    .timeline { position: relative; }
+
+    .timeline::before {
+      content:'';
+      position: absolute;
+      left: 50%;
+      top: 0; bottom: 0;
+      width: 3px;
+      background: linear-gradient(to bottom, var(--orange), var(--yellow), var(--green), var(--teal), var(--blue));
+      transform: translateX(-50%);
+      border-radius: 3px;
+    }
+
+    .timeline-item {
+      display: flex;
+      justify-content: flex-end;
+      padding-right: calc(50% + 2rem);
+      margin-bottom: 2.5rem;
+      position: relative;
+      opacity: 0;
+      transform: translateX(-30px);
+    }
+
+    .timeline-item.visible {
+      animation: fadeInLeft .6s forwards;
+    }
+
+    .timeline-item:nth-child(even) {
+      justify-content: flex-start;
+      padding-right: 0;
+      padding-left: calc(50% + 2rem);
+    }
+
+    .timeline-item:nth-child(even).visible {
+      animation-name: fadeInRight;
+    }
+
+    @keyframes fadeInLeft  { from { opacity:0; transform: translateX(-30px); } to { opacity:1; transform: translateX(0); } }
+    @keyframes fadeInRight { from { opacity:0; transform: translateX(30px); }  to { opacity:1; transform: translateX(0); } }
+    @keyframes fadeInUp    { from { opacity:0; transform: translateY(20px); }  to { opacity:1; transform: translateY(0); } }
+
+    .timeline-item::after {
+      content:'';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: var(--dot-color, #fff);
+      border: 3px solid var(--dark);
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 12px var(--dot-color, #fff);
+      z-index: 2;
+    }
+
+    .t-card {
+      background: var(--card-bg);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 14px;
+      padding: 1.3rem 1.5rem;
+      max-width: 340px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      transition: transform .3s, box-shadow .3s;
+    }
+
+    .t-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 30px rgba(0,0,0,.3);
+    }
+
+    .t-card h4 { font-size: .95rem; margin-bottom: .4rem; }
+    .t-card p  { font-size: .8rem; color: #bbb; line-height: 1.6; }
+
+    /* ── ADVANTAGES & DISADVANTAGES ── */
+    #pros-cons {
+      position: relative;
+      z-index: 1;
+      padding: 3rem 1rem 5rem;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    #pros-cons .section-header h2 { color: var(--teal); }
+
+    .pros-cons-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    .pros-card, .cons-card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 1.6rem;
+      border: 1px solid rgba(255,255,255,.08);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .pros-card { border-top: 3px solid var(--green); }
+    .cons-card { border-top: 3px solid #ef4444; }
+
+    .pros-card h3 { color: var(--green); font-size: 1rem; margin-bottom: 1rem; }
+    .cons-card h3 { color: #ef4444; font-size: 1rem; margin-bottom: 1rem; }
+
+    .pros-card ul, .cons-card ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: .6rem;
+    }
+
+    .pros-card li, .cons-card li {
+      font-size: .82rem;
+      color: #bbb;
+      line-height: 1.5;
+      padding-left: 1.4rem;
+      position: relative;
+    }
+
+    .pros-card li::before {
+      content: '✓';
+      position: absolute;
+      left: 0;
+      color: var(--green);
+      font-weight: 700;
+    }
+
+    .cons-card li::before {
+      content: '✗';
+      position: absolute;
+      left: 0;
+      color: #ef4444;
+      font-weight: 700;
+    }
+
+    /* ── TEAM ── */
+    #team {
+      position: relative;
+      z-index: 1;
+      padding: 3rem 1rem 6rem;
+      max-width: 1000px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    #team .section-header h2 { color: #FF6B35; }
+
+    .team-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: center;
+    }
+
+    .member {
+      background: var(--card-bg);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 50px;
+      padding: .6rem 1.4rem;
+      font-size: .85rem;
+      font-weight: 600;
+      letter-spacing: .5px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      transition: transform .3s, box-shadow .3s, background .3s;
+      cursor: default;
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .member:hover {
+      transform: translateY(-4px) scale(1.05);
+      background: rgba(255,107,53,.15);
+      box-shadow: 0 0 16px rgba(255,107,53,.4);
+    }
+
+    /* ── BACK TO TOP BUTTON ── */
+    .back-to-top {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      z-index: 99;
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      background: var(--orange);
+      color: #fff;
+      border: none;
+      font-size: 1.3rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 20px rgba(255,107,53,.4);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(10px);
+      transition: opacity .3s, visibility .3s, transform .3s;
+    }
+
+    .back-to-top.show {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .back-to-top:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 30px rgba(255,107,53,.5);
+    }
+
+    /* ── MODAL ── */
+    #modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.75);
+      z-index: 200;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      animation: fadeIn .3s ease;
+    }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    #modal-box {
+      background: #111;
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 20px;
+      padding: 2rem;
+      max-width: 500px;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+      transform: scale(1);
+      transition: transform .3s;
+      position: relative;
+      animation: modalSlideUp .3s ease;
+    }
+
+    @keyframes modalSlideUp {
+      from { opacity: 0; transform: translateY(20px) scale(0.95); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .modal-close {
+      position: absolute;
+      top: .8rem;
+      right: 1rem;
+      background: none;
+      border: none;
+      color: #aaa;
+      font-size: 1.4rem;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 8px;
+      transition: background .2s, color .2s;
+      min-width: 44px;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-close:hover { background: rgba(255,255,255,.1); color: #fff; }
+
+    #modal-content h3 {
+      font-size: 1.2rem;
+      margin-bottom: .8rem;
+    }
+
+    #modal-content p {
+      font-size: .88rem;
+      color: #bbb;
+      line-height: 1.7;
+    }
+
+    #modal-content ul {
+      margin-top: .6rem;
+      padding-left: 1.2rem;
+    }
+
+    #modal-content li {
+      font-size: .84rem;
+      color: #bbb;
+      line-height: 1.7;
+      margin-bottom: .3rem;
+    }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #111; }
+    ::-webkit-scrollbar-thumb { background: #FF6B35; border-radius: 3px; }
+
+    /* ── FOOTER ── */
+    footer {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 2rem 1rem;
+      color: #444;
+      font-size: .78rem;
+      border-top: 1px solid rgba(255,255,255,.05);
+      letter-spacing: 1px;
+    }
+
+    footer a {
+      color: var(--orange);
+      text-decoration: none;
+    }
+
+    /* ===================================================
+       MOBILE RESPONSIVE
+       =================================================== */
+
+    /* Tablet */
+    @media (max-width: 768px) {
+      /* NAV: Hamburger menu */
+      .hamburger { display: flex; }
+
+      nav {
+        justify-content: space-between;
+        padding: .6rem 1.2rem;
+      }
+
+      .nav-links {
+        position: fixed;
+        top: 0; right: 0;
+        width: 260px;
+        height: 100vh;
+        background: rgba(10,10,26,.97);
+        flex-direction: column;
+        padding: 5rem 2rem 2rem;
+        gap: 1.5rem;
+        transform: translateX(100%);
+        transition: transform .35s ease;
+        border-left: 1px solid rgba(255,255,255,.06);
+        z-index: 100;
+      }
+
+      .nav-links.open { transform: translateX(0); }
+
+      .nav-links a {
+        font-size: .9rem;
+        padding: .6rem 0;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+      }
+
+      /* HERO */
+      #hero { padding: 5rem 1.5rem 2rem; min-height: 90vh; }
+      #hero p.subtitle { font-size: .9rem; letter-spacing: 1.5px; }
+      .hero-description { font-size: .82rem; }
+      .hero-cta { font-size: .78rem; padding: .7rem 1.6rem; }
+
+      /* STATS */
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      /* 3D SCENE */
+      #scene-section { padding: 3rem 0.5rem; }
+
+      #scene-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 2rem;
+        scrollbar-width: thin;
+      }
+
+      #scene {
+        width: max-content;
+        min-width: 620px;
+        padding: 2rem 2rem 3rem;
+        transform: rotateX(6deg) rotateY(0deg);
+        gap: 1rem;
+      }
+
+      #scene-wrapper:hover #scene {
+        transform: rotateX(4deg) rotateY(0deg);
+      }
+
+      .block { width: 95px; }
+      .face-label { font-size: .58rem; width: 70px; }
+      .block-icon { font-size: 1.2rem; }
+
+      .phase-col { padding: 6px; }
+
+      /* CARDS */
+      .cards-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+
+      .card { padding: 1.4rem 1rem; }
+
+      /* TIMELINE */
+      .timeline::before { left: 16px; }
+
+      .timeline-item,
+      .timeline-item:nth-child(even) {
+        justify-content: flex-start;
+        padding-left: 48px;
+        padding-right: .5rem;
+        margin-bottom: 2rem;
+      }
+
+      .timeline-item::after,
+      .timeline-item:nth-child(even)::after {
+        left: 16px;
+        width: 12px; height: 12px;
+      }
+
+      .t-card { max-width: 100%; width: 100%; padding: 1rem; }
+
+      /* PROS/CONS */
+      .pros-cons-grid {
+        grid-template-columns: 1fr;
+      }
+
+      /* TEAM */
+      .team-grid { gap: .7rem; }
+      .member { font-size: .78rem; padding: .5rem 1rem; }
+
+      /* FOOTER */
+      footer { padding: 1.5rem 1rem; }
+
+      /* BACK TO TOP */
+      .back-to-top { bottom: 1.5rem; right: 1.2rem; width: 42px; height: 42px; }
+    }
+
+    /* Small phones */
+    @media (max-width: 480px) {
+      #hero h1 { font-size: 2rem; letter-spacing: 1px; }
+      #hero p.subtitle { font-size: .75rem; letter-spacing: 1px; }
+      .hero-badge { font-size: .65rem; }
+
+      .block { width: 80px; }
+      .face-label { font-size: .52rem; width: 65px; }
+      .phase-name { font-size: .7rem; }
+      .arrow { font-size: 1.2rem; }
+
+      .card h3 { font-size: .9rem; }
+      .card p  { font-size: .78rem; }
+
+      .timeline-item,
+      .timeline-item:nth-child(even) { padding-left: 40px; }
+
+      .t-card { padding: .8rem; }
+      .t-card h4 { font-size: .85rem; }
+      .t-card p  { font-size: .74rem; }
+
+      .stat-label { font-size: .65rem; }
+    }
+
+    /* Ultra-small (iPhone SE, Galaxy Fold) */
+    @media (max-width: 360px) {
+      #hero h1 { font-size: 1.7rem; }
+
+      .block { width: 70px; }
+      .face-label { display: none; }
+
+      .stats-grid { grid-template-columns: repeat(2, 1fr); gap: .6rem; }
+      .stat-item { padding: .8rem .5rem; }
+
+      .timeline-item,
+      .timeline-item:nth-child(even) { padding-left: 36px; }
+
+      .member { font-size: .72rem; padding: .4rem .8rem; }
+
+      #modal-box { padding: 1.2rem; }
+    }
+
+    /* ── TOUCH DEVICE STATES ── */
+    @media (hover: none) and (pointer: coarse) {
+      .phase-col:active { transform: scale(0.95); opacity: .85; }
+      .card:active { transform: scale(0.97); }
+      .member:active { background: rgba(255,107,53,.2); transform: scale(0.96); }
+      nav a:active { color: #FFD700; }
+      .t-card:active { transform: scale(0.98); }
+      #scene-wrapper:hover #scene { transform: rotateX(6deg) rotateY(0deg); }
+    }
+
+    /* ── Reduced Motion Preference ── */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+      html { scroll-behavior: auto; }
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="stars-canvas" aria-hidden="true"></canvas>
+<canvas id="webgl-canvas" aria-hidden="true"></canvas>
+
+<!-- ── NAVIGATION ── -->
+<nav role="navigation" aria-label="Main navigation">
+  <button class="hamburger" id="hamburger-btn" aria-label="Toggle menu" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+  <div class="nav-links" id="nav-links">
+    <a href="#hero">Home</a>
+    <a href="#scene-section">3D Model</a>
+    <a href="#phases">Phases</a>
+    <a href="#increments">Increments</a>
+    <a href="#pros-cons">Pros &amp; Cons</a>
+    <a href="#team">Team</a>
+  </div>
+</nav>
+
+<!-- ── HERO ── -->
+<section id="hero">
+  <span class="hero-badge">📚 Software Engineering Project</span>
+  <h1>INCREMENTAL MODEL</h1>
+  <p class="subtitle">BCA – 4th Semester &nbsp;|&nbsp; Software Engineering</p>
+  <p class="hero-description">
+    A software development approach where the product is designed, implemented, and tested incrementally — building a little more each time until the product is finished.
+  </p>
+  <a href="#scene-section" class="hero-cta">Explore the Model ↓</a>
+  <div class="scroll-hint">
+    <p>Scroll to explore</p>
+    <span></span>
+    ▼
+  </div>
+</section>
+
+<!-- ── STATS ── -->
+<section id="stats" class="reveal">
+  <div class="stats-grid">
+    <div class="stat-item">
+      <div class="stat-number" data-target="5">0</div>
+      <div class="stat-label">Phases</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number" data-target="5">0</div>
+      <div class="stat-label">Increments</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number" data-target="11">0</div>
+      <div class="stat-label">Team Members</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number" data-target="1">0</div>
+      <div class="stat-label">Final Product</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 3D SCENE ── -->
+<section id="scene-section" class="reveal">
+  <div class="section-header">
+    <h2>⚙️ 3D Phase Visualizer</h2>
+    <p>Interact with the building blocks of incremental development</p>
+  </div>
+  <div id="scene-wrapper">
+    <div id="scene">
+      <div class="phase-col" onclick="openModal('req')" role="button" tabindex="0" aria-label="Learn about Requirements phase">
+        <div class="block h1">
+          <div class="block-icon">🏆</div>
+          <div class="face-label">Final Product &amp; Maintenance</div>
+        </div>
+        <div class="phase-name" style="color:var(--orange)">Requirements</div>
+      </div>
+      <div class="arrow" aria-hidden="true">›</div>
+      <div class="phase-col" onclick="openModal('code')" role="button" tabindex="0" aria-label="Learn about Coding phase">
+        <div class="block h2">
+          <div class="block-icon">💻</div>
+          <div class="face-label">Code</div>
+        </div>
+        <div class="phase-name" style="color:var(--yellow)">Coding</div>
+      </div>
+      <div class="arrow" aria-hidden="true">›</div>
+      <div class="phase-col" onclick="openModal('test')" role="button" tabindex="0" aria-label="Learn about Testing phase">
+        <div class="block h3">
+          <div class="block-icon">🔬</div>
+          <div class="face-label">Testing</div>
+        </div>
+        <div class="phase-name" style="color:var(--green)">Testing</div>
+      </div>
+      <div class="arrow" aria-hidden="true">›</div>
+      <div class="phase-col" onclick="openModal('design')" role="button" tabindex="0" aria-label="Learn about Design phase">
+        <div class="block h4">
+          <div class="block-icon">🎨</div>
+          <div class="face-label">Design</div>
+        </div>
+        <div class="phase-name" style="color:var(--teal)">Design</div>
+      </div>
+      <div class="arrow" aria-hidden="true">›</div>
+      <div class="phase-col" onclick="openModal('plan')" role="button" tabindex="0" aria-label="Learn about Planning phase">
+        <div class="block h5">
+          <div class="block-icon">📋</div>
+          <div class="face-label">Planning &amp; Analysis</div>
+        </div>
+        <div class="phase-name" style="color:var(--blue)">Planning</div>
+      </div>
+    </div>
+  </div>
+  <p style="color:#555; font-size:.8rem; margin-top:1rem; text-align:center;">
+    Tap a block to learn more &nbsp;•&nbsp; Scroll horizontally on mobile →
+  </p>
+</section>
+
+<!-- ── MODAL ── -->
+<div id="modal-overlay" onclick="closeModal()" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div id="modal-box" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeModal()" aria-label="Close modal">✕</button>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<!-- ── PHASES ── -->
+<section id="phases" class="reveal">
+  <div class="section-header">
+    <h2>📋 Software Development Phases</h2>
+    <p>Each increment goes through these essential stages</p>
+  </div>
+  <div class="cards-grid">
+    <div class="card" style="--accent:var(--blue)">
+      <div class="card-icon">📋</div>
+      <h3>1. Planning &amp; Analysis</h3>
+      <p>Define project scope, feasibility, cost estimation, resource planning and schedule. Identify risks and mitigation strategies.</p>
+      <span class="card-tag">Foundation</span>
+    </div>
+    <div class="card" style="--accent:var(--teal)">
+      <div class="card-icon">🎨</div>
+      <h3>2. Design</h3>
+      <p>System architecture, UI wireframes, database design, component specification. Create detailed design documents.</p>
+      <span class="card-tag">Blueprint</span>
+    </div>
+    <div class="card" style="--accent:var(--green)">
+      <div class="card-icon">🔬</div>
+      <h3>3. Testing</h3>
+      <p>Unit, integration and system testing. Bug tracking, quality assurance cycles. Ensure each increment meets requirements.</p>
+      <span class="card-tag">Quality</span>
+    </div>
+    <div class="card" style="--accent:var(--yellow)">
+      <div class="card-icon">💻</div>
+      <h3>4. Coding</h3>
+      <p>Actual implementation of each increment following design specifications. Code reviews and version control management.</p>
+      <span class="card-tag">Build</span>
+    </div>
+    <div class="card" style="--accent:var(--orange)">
+      <div class="card-icon">🏆</div>
+      <h3>5. Final Product</h3>
+      <p>Deployment, user training, documentation and ongoing maintenance. Continuous monitoring and support.</p>
+      <span class="card-tag">Delivery</span>
+    </div>
+  </div>
+</section>
+
+<!-- ── INCREMENTS TIMELINE ── -->
+<section id="increments" class="reveal">
+  <div class="section-header">
+    <h2>🔄 Delivery Increments</h2>
+    <p>Progressive delivery of fully functional software modules</p>
+  </div>
+  <div class="timeline">
+    <div class="timeline-item" style="--dot-color:var(--orange)">
+      <div class="t-card">
+        <h4 style="color:var(--orange)">🟠 Increment 1 — Core Functionality</h4>
+        <p>Basic architecture established. Core features delivered. First working prototype released to client for feedback.</p>
+      </div>
+    </div>
+    <div class="timeline-item" style="--dot-color:var(--yellow)">
+      <div class="t-card">
+        <h4 style="color:var(--yellow)">🟡 Increment 2 — Enhanced Features</h4>
+        <p>Additional features layered on top. UI improvements applied. Performance tuning begins based on user feedback.</p>
+      </div>
+    </div>
+    <div class="timeline-item" style="--dot-color:var(--green)">
+      <div class="t-card">
+        <h4 style="color:var(--green)">🟢 Increment 3 — Integration</h4>
+        <p>All modules integrated. Security enhancements, data validation and edge-case handling completed.</p>
+      </div>
+    </div>
+    <div class="timeline-item" style="--dot-color:var(--teal)">
+      <div class="t-card">
+        <h4 style="color:var(--teal)">🔵 Increment 4 — Testing &amp; Refinement</h4>
+        <p>Rigorous end-to-end testing. Client acceptance testing (UAT). Critical bug fixes resolved.</p>
+      </div>
+    </div>
+    <div class="timeline-item" style="--dot-color:#a78bfa">
+      <div class="t-card">
+        <h4 style="color:#a78bfa">🟣 Increment 5 — Final Release</h4>
+        <p>Deployment to production. Documentation finalized. Maintenance plan and SLA established.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── PROS & CONS ── -->
+<section id="pros-cons" class="reveal">
+  <div class="section-header">
+    <h2>⚖️ Advantages &amp; Disadvantages</h2>
+    <p>Understanding the trade-offs of the incremental approach</p>
+  </div>
+  <div class="pros-cons-grid">
+    <div class="pros-card">
+      <h3>✅ Advantages</h3>
+      <ul>
+        <li>Early delivery of working software to the client</li>
+        <li>Flexible — easy to accommodate requirement changes</li>
+        <li>Lower initial delivery cost</li>
+        <li>Easier to test and debug smaller modules</li>
+        <li>Reduced risk through iterative feedback</li>
+        <li>Client gets important functionality early</li>
+      </ul>
+    </div>
+    <div class="cons-card">
+      <h3>❌ Disadvantages</h3>
+      <ul>
+        <li>Requires good planning and design upfront</li>
+        <li>Total cost may be higher than waterfall</li>
+        <li>System architecture must be well-defined early</li>
+        <li>Integration issues between increments possible</li>
+        <li>Not ideal for small projects or unclear requirements</li>
+        <li>Requires experienced team for best results</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ── TEAM ── -->
+<section id="team" class="reveal">
+  <div class="section-header">
+    <h2>👥 Team Members</h2>
+    <p>The brilliant minds behind this presentation</p>
+  </div>
+  <div class="team-grid">
+    <span class="member">⭐ Purnendu Marik</span>
+    <span class="member">⭐ Diya Pal</span>
+    <span class="member">⭐ Pijush Sadhukhan</span>
+    <span class="member">⭐ Trishanjit Biswas</span>
+    <span class="member">⭐ Sayantan Shil</span>
+    <span class="member">⭐ Sougata Halder</span>
+    <span class="member">⭐ Subhankar Naskar</span>
+    <span class="member">⭐ Sneha Mali</span>
+    <span class="member">⭐ Snehadeep Halder</span>
+    <span class="member">⭐ Suraj Mondal</span>
+    <span class="member">⭐ Sumit Naskar</span>
+  </div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer>
+  BCA – 4th Semester &nbsp;|&nbsp; Incremental Model Presentation &nbsp;|&nbsp; 2026
+  <br/>
+  <span style="color:#333;">Built with ❤️ for Software Engineering</span>
+</footer>
+
+<!-- ── BACK TO TOP ── -->
+<button class="back-to-top" id="back-to-top" aria-label="Back to top">↑</button>
+
+<script>
+// ── Star Field Background ──
+(function() {
+  const c = document.getElementById('stars-canvas');
+  const ctx = c.getContext('2d');
+  let W, H, stars = [];
+
+  function resize() {
+    W = c.width = window.innerWidth;
+    H = c.height = window.innerHeight;
+  }
+
+  function initStars() {
+    const count = window.innerWidth < 600 ? 100 : 200; // Fewer stars on mobile
+    stars = Array.from({ length: count }, () => ({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      r: Math.random() * 1.5 + 0.3,
+      dx: (Math.random() - 0.5) * 0.15,
+      dy: (Math.random() - 0.5) * 0.15,
+      alpha: Math.random() * 0.8 + 0.2,
+      twinkleSpeed: Math.random() * 0.02 + 0.005
+    }));
+  }
+
+  let t = 0;
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    t += 1;
+    stars.forEach(s => {
+      s.x += s.dx;
+      s.y += s.dy;
+      if (s.x < 0) s.x = W;
+      if (s.x > W) s.x = 0;
+      if (s.y < 0) s.y = H;
+      if (s.y > H) s.y = 0;
+
+      const twinkle = Math.sin(t * s.twinkleSpeed) * 0.3 + 0.7;
+
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255, 255, 255, ${s.alpha * twinkle})`;
+      ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+
+  resize();
+  initStars();
+  draw();
+
+  window.addEventListener('resize', () => {
+    resize();
+    initStars();
+  });
+})();
+
+// ── Floating Particles on WebGL Canvas (lightweight) ──
+(function() {
+  const c = document.getElementById('webgl-canvas');
+  const ctx = c.getContext('2d');
+  let W, H, particles = [];
+  const colors = ['#FF6B35', '#FFD700', '#06D6A0', '#00B4D8', '#118AB2'];
+
+  function resize() {
+    W = c.width = window.innerWidth;
+    H = c.height = window.innerHeight;
+  }
+
+  function init() {
+    const count = window.innerWidth < 600 ? 15 : 30;
+    particles = Array.from({ length: count }, () => ({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      r: Math.random() * 3 + 1,
+      dx: (Math.random() - 0.5) * 0.4,
+      dy: (Math.random() - 0.5) * 0.4,
+      color: colors[Math.floor(Math.random() * colors.length)]
+    }));
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    particles.forEach(p => {
+      p.x += p.dx;
+      p.y += p.dy;
+      if (p.x < 0 || p.x > W) p.dx *= -1;
+      if (p.y < 0 || p.y > H) p.dy *= -1;
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = 0.4;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    });
+
+    // Draw connection lines
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 150) {
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = `rgba(255,255,255,${0.06 * (1 - dist / 150)})`;
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+      }
+    }
+
+    requestAnimationFrame(draw);
+  }
+
+  resize();
+  init();
+  draw();
+
+  window.addEventListener('resize', () => {
+    resize();
+    init();
+  });
+})();
+
+// ── Hamburger Menu ──
+const hamburgerBtn = document.getElementById('hamburger-btn');
+const navLinks = document.getElementById('nav-links');
+
+hamburgerBtn.addEventListener('click', () => {
+  const isOpen = navLinks.classList.toggle('open');
+  hamburgerBtn.classList.toggle('open');
+  hamburgerBtn.setAttribute('aria-expanded', isOpen);
+});
+
+// Close menu on link click
+navLinks.querySelectorAll('a').forEach(link => {
+  link.addEventListener('click', () => {
+    navLinks.classList.remove('open');
+    hamburgerBtn.classList.remove('open');
+    hamburgerBtn.setAttribute('aria-expanded', 'false');
+  });
+});
+
+// Close menu on outside click
+document.addEventListener('click', (e) => {
+  if (!navLinks.contains(e.target) && !hamburgerBtn.contains(e.target)) {
+    navLinks.classList.remove('open');
+    hamburgerBtn.classList.remove('open');
+    hamburgerBtn.setAttribute('aria-expanded', 'false');
+  }
+});
+
+// ── Nav Scroll Effects ──
+const nav = document.querySelector('nav');
+const backToTop = document.getElementById('back-to-top');
+const sections = document.querySelectorAll('section[id]');
+
+window.addEventListener('scroll', () => {
+  const scrollY = window.scrollY;
+
+  // Nav background
+  nav.classList.toggle('scrolled', scrollY > 50);
+
+  // Back to top button
+  backToTop.classList.toggle('show', scrollY > 500);
+
+  // Active nav link
+  let current = '';
+  sections.forEach(section => {
+    const top = section.offsetTop - 100;
+    if (scrollY >= top) current = section.getAttribute('id');
+  });
+
+  navLinks.querySelectorAll('a').forEach(a => {
+    a.classList.remove('active');
+    if (a.getAttribute('href') === `#${current}`) a.classList.add('active');
+  });
+}, { passive: true });
+
+backToTop.addEventListener('click', () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+// ── Section Reveal on Scroll ──
+const revealElements = document.querySelectorAll('.reveal');
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+revealElements.forEach(el => revealObserver.observe(el));
+
+// ── Timeline Item Reveal ──
+const timelineItems = document.querySelectorAll('.timeline-item');
+const timelineObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.2, rootMargin: '0px 0px -30px 0px' });
+
+timelineItems.forEach(item => timelineObserver.observe(item));
+
+// ── Counter Animation ──
+const statNumbers = document.querySelectorAll('.stat-number[data-target]');
+const counterObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const el = entry.target;
+      const target = parseInt(el.getAttribute('data-target'));
+      let count = 0;
+      const step = Math.max(1, Math.floor(target / 30));
+      const interval = setInterval(() => {
+        count += step;
+        if (count >= target) {
+          count = target;
+          clearInterval(interval);
+        }
+        el.textContent = count;
+      }, 40);
+      counterObserver.unobserve(el);
+    }
+  });
+}, { threshold: 0.5 });
+
+statNumbers.forEach(el => counterObserver.observe(el));
+
+// ── Modal System ──
+const modalData = {
+  req: {
+    title: '📋 Requirements Analysis',
+    color: 'var(--orange)',
+    content: `
+      <p>The first and most critical phase. The entire project requirements are gathered, analyzed, and divided into smaller increments.</p>
+      <ul>
+        <li><strong>Stakeholder interviews</strong> to understand needs</li>
+        <li><strong>SRS document</strong> (Software Requirements Specification) creation</li>
+        <li><strong>Prioritization</strong> of features for each increment</li>
+        <li><strong>Feasibility analysis</strong> — technical, economic, and operational</li>
+        <li><strong>Risk assessment</strong> and mitigation planning</li>
+      </ul>
+    `
+  },
+  code: {
+    title: '💻 Coding / Implementation',
+    color: 'var(--yellow)',
+    content: `
+      <p>Developers transform the design into actual working code. Each increment is coded independently.</p>
+      <ul>
+        <li><strong>Module-wise coding</strong> following design specs</li>
+        <li><strong>Version control</strong> (Git) for team collaboration</li>
+        <li><strong>Code reviews</strong> and pair programming</li>
+        <li><strong>Coding standards</strong> and best practices enforcement</li>
+        <li><strong>Documentation</strong> of code inline and externally</li>
+      </ul>
+    `
+  },
+  test: {
+    title: '🔬 Testing & QA',
+    color: 'var(--green)',
+    content: `
+      <p>Every increment undergoes rigorous testing to ensure quality before delivery.</p>
+      <ul>
+        <li><strong>Unit testing</strong> — individual components</li>
+        <li><strong>Integration testing</strong> — modules working together</li>
+        <li><strong>System testing</strong> — complete increment validation</li>
+        <li><strong>UAT</strong> — User Acceptance Testing with client</li>
+        <li><strong>Bug tracking</strong> and resolution cycles</li>
+      </ul>
+    `
+  },
+  design: {
+    title: '🎨 Design Phase',
+    color: 'var(--teal)',
+    content: `
+      <p>Translates requirements into a technical blueprint for the development team.</p>
+      <ul>
+        <li><strong>System architecture</strong> — high-level structure</li>
+        <li><strong>Database design</strong> — ER diagrams, schema</li>
+        <li><strong>UI/UX wireframes</strong> — user interface mockups</li>
+        <li><strong>API design</strong> — endpoints and data contracts</li>
+        <li><strong>Component diagram</strong> — module dependencies</li>
+      </ul>
+    `
+  },
+  plan: {
+    title: '📋 Planning & Scheduling',
+    color: 'var(--blue)',
+    content: `
+      <p>Sets the foundation for the entire project with clear goals and timelines.</p>
+      <ul>
+        <li><strong>Project scope</strong> definition and boundaries</li>
+        <li><strong>Resource allocation</strong> — team, tools, budget</li>
+        <li><strong>Timeline estimation</strong> — Gantt charts, milestones</li>
+        <li><strong>Increment planning</strong> — what ships when</li>
+        <li><strong>Communication plan</strong> — meetings, reports, reviews</li>
+      </ul>
+    `
+  }
+};
+
+function openModal(key) {
+  const data = modalData[key];
+  if (!data) return;
+
+  const overlay = document.getElementById('modal-overlay');
+  const content = document.getElementById('modal-content');
+
+  content.innerHTML = `
+    <h3 id="modal-title" style="color:${data.color}">${data.title}</h3>
+    ${data.content}
+  `;
+
+  overlay.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+
+  // Focus trap
+  setTimeout(() => {
+    document.querySelector('.modal-close').focus();
+  }, 100);
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+// Close modal on Escape
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeModal();
+});
+
+// Keyboard support for phase columns
+document.querySelectorAll('.phase-col').forEach(col => {
+  col.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      col.click();
+    }
+  });
+});
+
+// ── Prevent body scroll when menu is open on mobile ──
+const mediaQuery = window.matchMedia('(max-width: 768px)');
+const observer = new MutationObserver(() => {
+  if (mediaQuery.matches && navLinks.classList.contains('open')) {
+    document.body.style.overflow = 'hidden';
+  } else if (!document.getElementById('modal-overlay').style.display ||
+             document.getElementById('modal-overlay').style.display === 'none') {
+    document.body.style.overflow = '';
+  }
+});
+
+observer.observe(navLinks, { attributes: true, attributeFilter: ['class'] });
+</script>
+</body>
+</html>
