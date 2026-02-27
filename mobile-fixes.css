@@ -1,0 +1,219 @@
+/* ── IMPROVED MOBILE RESPONSIVE QUERIES ── */
+
+/* Tablet & below */
+@media (max-width: 768px) {
+
+  /* ── NAV: scrollable with fade hints ── */
+  nav {
+    justify-content: flex-start;
+    overflow-x: auto;
+    white-space: nowrap;
+    gap: 1.2rem;
+    padding: .8rem 1.2rem;
+    -webkit-overflow-scrolling: touch;
+    /* Fade-out hint on right edge */
+    mask-image: linear-gradient(to right, black 85%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
+  }
+
+  nav a {
+    font-size: .75rem;
+    /* Enlarge tap target */
+    padding: .5rem .3rem;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  /* ── HERO ── */
+  #hero {
+    padding: 5rem 1.5rem 2rem; /* Extra top padding for fixed nav */
+    min-height: 90vh;
+  }
+
+  #hero p.subtitle {
+    font-size: .9rem;
+    letter-spacing: 1.5px;
+  }
+
+  /* ── 3D SCENE: horizontal scroll ── */
+  #scene-section {
+    padding: 3rem 0.5rem;
+  }
+
+  #scene-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2rem;
+    /* Scrollbar hint */
+    scrollbar-width: thin;
+  }
+
+  #scene {
+    width: max-content;
+    min-width: 650px; /* Ensure it doesn't collapse */
+    padding: 2rem 2rem 3rem;
+    transform: rotateX(6deg) rotateY(0deg);
+    gap: 1rem;
+  }
+
+  #scene-wrapper:hover #scene {
+    transform: rotateX(4deg) rotateY(0deg);
+  }
+
+  .block { width: 95px; }
+  .face-label { font-size: .58rem; width: 70px; padding: 5px 3px; }
+  .block-icon { font-size: 1.2rem; }
+
+  /* Larger tap targets for phase columns */
+  .phase-col {
+    padding: 8px;
+    min-width: 44px;
+  }
+
+  /* ── CARDS GRID ── */
+  .cards-grid {
+    grid-template-columns: 1fr; /* Stack cards vertically */
+    gap: 1rem;
+  }
+
+  .card {
+    padding: 1.4rem 1rem;
+  }
+
+  /* ── TIMELINE: single column left-aligned ── */
+  .timeline::before {
+    left: 16px;
+  }
+
+  .timeline-item,
+  .timeline-item:nth-child(even) {
+    justify-content: flex-start;
+    padding-left: 48px; /* Tighter for small screens */
+    padding-right: 0.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .timeline-item::after {
+    left: 16px;
+    width: 12px;
+    height: 12px;
+  }
+
+  .t-card {
+    max-width: 100%;
+    width: 100%;
+    padding: 1rem;
+  }
+
+  .t-card h4 { font-size: .88rem; }
+  .t-card p  { font-size: .76rem; }
+
+  /* ── TEAM ── */
+  .team-grid {
+    gap: .7rem;
+  }
+
+  .member {
+    font-size: .78rem;
+    padding: .5rem 1rem;
+    /* Minimum tap target */
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  /* ── MODAL: scroll-safe ── */
+  #modal-box {
+    max-height: 85vh !important;
+    overflow-y: auto !important;
+    margin: 1rem;
+    padding: 1.5rem !important;
+  }
+
+  #modal-overlay {
+    padding: 1rem;
+  }
+}
+
+/* Very small phones */
+@media (max-width: 480px) {
+  #hero h1 {
+    font-size: 2rem;
+    letter-spacing: 1px;
+  }
+
+  #hero p.subtitle {
+    font-size: .78rem;
+    letter-spacing: 1px;
+  }
+
+  .block { width: 80px; }
+  .face-label { font-size: .52rem; width: 65px; }
+  .phase-name { font-size: .7rem; }
+  .arrow { font-size: 1.2rem; }
+
+  .cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .card h3 { font-size: .9rem; }
+  .card p  { font-size: .78rem; }
+
+  .timeline-item,
+  .timeline-item:nth-child(even) {
+    padding-left: 40px;
+  }
+
+  .t-card { padding: .8rem; }
+
+  nav {
+    gap: 1rem;
+    padding: .6rem .8rem;
+  }
+}
+
+/* Ultra-small (320px and below, e.g., iPhone SE) */
+@media (max-width: 360px) {
+  #hero h1 { font-size: 1.7rem; }
+
+  .block { width: 70px; }
+  .face-label { display: none; } /* Hide labels, rely on phase-name below */
+
+  .timeline-item,
+  .timeline-item:nth-child(even) {
+    padding-left: 36px;
+  }
+
+  .member {
+    font-size: .72rem;
+    padding: .4rem .8rem;
+  }
+}
+
+/* ── TOUCH FEEDBACK for all interactive elements ── */
+@media (hover: none) and (pointer: coarse) {
+  .phase-col:active {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+
+  .card:active {
+    transform: scale(0.97);
+    box-shadow: 0 0 20px var(--accent);
+  }
+
+  .member:active {
+    background: rgba(255, 107, 53, .2);
+    transform: scale(0.96);
+  }
+
+  nav a:active {
+    color: #FFD700;
+  }
+
+  /* Disable hover-dependent 3D transform on touch */
+  #scene-wrapper:hover #scene {
+    transform: rotateX(6deg) rotateY(0deg);
+  }
+    }
